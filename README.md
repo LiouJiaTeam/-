@@ -24,7 +24,7 @@ ROBOTIS 支援把模擬訓練好的 policy 直接跑在真實 AI Worker 上。
 使用 **ai_worker** repository 把機器人 bring up（ROS 2 + DYNAMIXEL 馬達 + Jetson Orin）。  
 這一步讓實體機器人能接收指令。
 
-**Step 2：資料收集（推薦先用 Imitation Learning 做基底）**  
+**Step 2：資料收集（推薦先用 Imitation Learning）**  
 真人透過遠端操作（teleop）在**真實機器人**上示範任務（例如 Pick-and-Place）。  
 腳本會同時記錄相機影像 + 機器人狀態。
 
