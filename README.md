@@ -73,25 +73,24 @@ python scripts/sim2real/reinforcement_learning/inference/OMY/reach/run_omy_reach
 ### 模擬機器人實現步驟 (AI Worker - Robotis Lab)
 
 本指南介紹如何在 Isaac Lab 模擬環境中，針對 FFW-BG2（雙臂行動機器人）進行從資料收集到模型訓練與驗證的完整模仿學習（Imitation Learning）流程。
-1. 安裝環境
+#### 安裝環境
 
 確保已完成 robotis_lab 的容器配置與 Isaac Lab 環境安裝。
-2. 資料收集 (Teleop + Record)
+#### 資料收集 (Teleop + Record)
 
 在模擬器裡操作虛擬機器人，利用鍵盤或遙控器完成任務，並記錄感測器數據（相機影像、機器人狀態）。
-FFW-BG2 Pick and Place（雙臂版本）
-Bash
-
+FFW-BG2 Pick and Place
+```bash
 python scripts/imitation_learning/isaaclab_recorder/record_demos.py \
   --task RobotisLab-PickPlace-FFW-BG2-IK-Rel-v0 \
   --teleop_device keyboard \
   --dataset_file ./datasets/dataset.hdf5 \
   --num_demos 10 \
   --enable_cameras
+```
+* 操作說明：使用鍵盤控制（如 WASD/QE 移動手臂，K 開關夾爪）。
 
-    操作說明：使用鍵盤控制（如 WASD/QE 移動手臂，K 開關夾爪）。
-
-    建議：嘗試多種不同的物體起始位置與角度，增加資料多樣性。
+* 建議：嘗試多種不同的物體起始位置與角度，增加資料多樣性。
 
 3. 資料處理與標註 (Data Processing)
 
@@ -99,32 +98,29 @@ python scripts/imitation_learning/isaaclab_recorder/record_demos.py \
 回放檢查錄製資料
 
 建議先回放第 0 筆資料，確認動作與影像錄製是否正常：
-Bash
-
+```bash
 python scripts/imitation_learning/isaaclab_recorder/replay_demos.py \
   --task RobotisLab-PickPlace-FFW-BG2-IK-Rel-v0 \
   --dataset_file ./datasets/dataset.hdf5 \
   --select_episodes 0
-
+```
 手動標註 (Annotate)
 
 針對 FFW-BG2 任務進行階段性標註（定義抓取、放置等關鍵點）：
-Bash
-
+```bash
 python scripts/imitation_learning/isaaclab_mimic/annotate_demos.py \
   --device cuda \
   --task RobotisLab-PickPlace-FFW-BG2-Mimic-v0 \
   --input_file ./datasets/dataset.hdf5 \
   --output_file ./datasets/annotated_dataset.hdf5 \
   --enable_cameras
-
-    熱鍵說明：n (播放)、b (暫停)、s (保存標註)。
+```
+* 按鍵說明：n (播放)、b (暫停)、s (保存標註)。
 
 4. 生成 Mimic 資料集 (Data Augmentation)
 
 透過已標註的 Demo，在模擬器中自動生成更多變體的資料集：
-Bash
-
+```bash
 python scripts/imitation_learning/isaaclab_mimic/generate_dataset.py \
   --device cuda \
   --task RobotisLab-PickPlace-FFW-BG2-Mimic-v0 \
@@ -134,32 +130,28 @@ python scripts/imitation_learning/isaaclab_mimic/generate_dataset.py \
   --output_file ./datasets/generated_dataset.hdf5 \
   --enable_cameras \
   --headless
-
+```
 5. 開始訓練 (Training)
-
+   
 使用 Robomimic 框架進行行為克隆（BC）訓練：
-Bash
-
+```bash
 python scripts/imitation_learning/robomimic/train.py \
   --task RobotisLab-PickPlace-FFW-BG2-IK-Rel-v0 \
   --algo bc \
   --dataset ./datasets/generated_dataset.hdf5 \
   --name bc_rnn_image_ffw_bg2_exp1 \
   --log_dir robomimic
-
-6. 模型驗證 (Evaluation)
-尋找最新 Checkpoint
-
-訓練完成後，可以使用以下指令找到最新的模型權重檔（.pth）：
-Bash
-
+```
+6. 模型驗證 (Evaluation）
+   
+尋找最新 Checkpoint，訓練完成後，可以使用以下指令找到最新的模型權重檔（.pth）：
+```bash
 find logs/robomimic/RobotisLab-PickPlace-FFW-BG2-IK-Rel-v0 -name "*.pth" | sort | tail -n 1
-
-運行推理驗證
+```
+#### 運行推理驗證
 
 載入訓練好的權重，觀察機器人在模擬環境中的自動化表現：
-Bash
-
+```bash
 python scripts/imitation_learning/robomimic/play.py \
   --device cuda \
   --task RobotisLab-PickPlace-FFW-BG2-IK-Rel-v0 \
@@ -167,5 +159,5 @@ python scripts/imitation_learning/robomimic/play.py \
   --num_rollouts 20 \
   --horizon 800 \
   --enable_cameras
+```
 
-    Note: 確保在執行上述指令前，已在主機端運行 xhost +local:root 以獲得圖形介面權限。
